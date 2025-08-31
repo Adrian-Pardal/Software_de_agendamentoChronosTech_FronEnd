@@ -12,7 +12,6 @@ import { classNames } from 'primereact/utils';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Agenda } from '@/types';
 import { RecursoService } from '@/service/RecursoService';
-import { error } from 'console';
 
 const Recurso= () => {
     let recursoVazio: Agenda.Recurso = {
@@ -32,7 +31,7 @@ const Recurso= () => {
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
     const recursoService = useMemo(() => new RecursoService(), []);
-    //conexao com back end fazer mais pra frente
+
     useEffect(() => {
 
         if(!recursos){
@@ -185,8 +184,6 @@ const Recurso= () => {
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
-        // let _recurso = { ...recurso };
-        // _recurso[`${name}`] = val;
         setRecurso(prevRecurso =>({
             ...prevRecurso,
             [name]: val,
@@ -240,16 +237,6 @@ const Recurso= () => {
         );
     };
 
-    //Deixei pois pode ser que vamos usar mais para frente
-
-    // const imageBodyTemplate = (rowData: Demo.Product) => {
-    //     return (
-    //         <>
-    //             <span className="p-column-title">Image</span>
-    //             <img src={`/demo/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2" width="100" />
-    //         </>
-    //     );
-    // };
 
     const actionBodyTemplate = (rowData: Agenda.Recurso) => {
         return (
@@ -318,13 +305,11 @@ const Recurso= () => {
                         <Column field="nome" header="Nome Completo" sortable body={nomeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
                         <Column field="chave" header="Chave" sortable body={chaveBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
                         <Column body={actionBodyTemplate} headerStyle={{minWidth: '10rem'}}></Column>
-                        {/* deixei aqui caso adicionacimos imagem : <Column header="Image" body={imageBodyTemplate}></Column>*/}
 
                     </DataTable>
 
                     <Dialog visible={recursoDialog} style={{ width: '450px' }} header="Detahles de Recurso" modal className="p-fluid" footer={recursoDialogFooter} onHide={hideDialog}>
 
-                        {/* deixei aqui caso adicionacimos imagem : {product.image && <img src={`/demo/images/product/${product.image}`} alt={product.image} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}*/}
                         <div className="field">
                             <label htmlFor="nome">Nome</label>
                             <InputText
