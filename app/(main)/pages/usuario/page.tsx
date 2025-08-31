@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+
 'use client';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
@@ -16,7 +16,7 @@ import { error } from 'console';
 
 const Usuario= () => {
     let usuarioVazio: Agenda.Usuario = {
-        id: 0,
+        id: undefined,
         nome: '',
         email: '',
         senha: '',
@@ -39,7 +39,7 @@ const Usuario= () => {
     //conexao com back end fazer mais pra frente
     useEffect(() => {
 
-        if(!usuarios != null){
+        if(!usuarios){
         usuarioService.listarTodos()
             .then((response) =>{
                 console.log(response.data);
@@ -174,7 +174,7 @@ const Usuario= () => {
             toast.current?.show({
                     severity: 'success',
                     summary: 'Sucesso!',
-                    detail: 'Usuario Deletado com Sucesso!',
+                    detail: 'Usuários Deletado com Sucesso!',
                     life: 3000
                 });
         }).catch((error)=>{
@@ -189,10 +189,12 @@ const Usuario= () => {
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
-        let _usuario = { ...usuario };
-        _usuario[`${name}`] = val;
-
-        setUsuario(_usuario);
+        // let _usuario = { ...usuario };
+        // _usuario[`${name}`] = val;
+        setUsuario(prevUsuario =>({
+            ...prevUsuario,
+            [name]: val,
+        }));
     };
 
     const leftToolbarTemplate = () => {

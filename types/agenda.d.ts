@@ -1,10 +1,16 @@
 declare namespace Agenda {
     type Usuario = {
-        id?: number;
+        id?: undefined;
         nome: string;
         email: string;
-        senha?: string;
+        senha: string;
         numeroTelefone?: undefined;
         cpf?: undefined;
     };
+
+    type Recurso ={
+        id?: undefined;
+        nome:string ;
+        chave:string;
+    }
 }
