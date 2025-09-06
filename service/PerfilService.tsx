@@ -1,8 +1,7 @@
 import { ModeloService } from "./ModeloService";
 
-
-export class UsuarioService extends ModeloService{
+export class PerfilService extends ModeloService{
     constructor(){
-        super("/usuario")
+        super("/perfil")
     }
 }

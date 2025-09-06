@@ -4,13 +4,18 @@ declare namespace Agenda {
         nome: string;
         email: string;
         senha: string;
-        numeroTelefone?: undefined;
-        cpf?: undefined;
+        numeroTelefone?: string;
+        cpf?: string;
     };
 
     type Recurso ={
         id?: undefined;
         nome:string ;
         chave:string;
+    };
+
+    type Perfil = {
+        id?: undefined;
+        descricao: string;
     }
 }

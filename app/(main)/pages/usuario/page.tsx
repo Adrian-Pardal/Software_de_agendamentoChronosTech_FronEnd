@@ -9,10 +9,13 @@ import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import { Toolbar } from 'primereact/toolbar';
 import { classNames } from 'primereact/utils';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState , useCallback } from 'react';
 import { Agenda } from '@/types';
 import { UsuarioService } from '@/service/UsuarioService';
 import { error } from 'console';
+import { InputMask } from 'primereact/inputmask';
+import { InputMaskChangeEvent } from 'primereact/inputmask';
+
 
 const Usuario= () => {
     let usuarioVazio: Agenda.Usuario = {
@@ -20,8 +23,8 @@ const Usuario= () => {
         nome: '',
         email: '',
         senha: '',
-        numeroTelefone: undefined,
-        cpf: undefined,
+        numeroTelefone: '',
+        cpf: '',
 
     };
 
@@ -37,18 +40,17 @@ const Usuario= () => {
     const dt = useRef<DataTable<any>>(null);
     const usuarioService = useMemo(() => new UsuarioService(), []);
     //conexao com back end fazer mais pra frente
-    useEffect(() => {
 
-        if(!usuarios){
+
+    const loadUsuarios = useCallback(() => {
         usuarioService.listarTodos()
-            .then((response) =>{
-                console.log(response.data);
-                setUsuarios(response.data);
-            }).catch((error) =>{
-                console.log(error);
-            });
-        }
-    }, [usuarioService , usuarios]);
+            .then(res => setUsuarios(res.data))
+            .catch(err => console.log(err));
+    }, [usuarioService]);
+
+    useEffect(() => {
+        loadUsuarios();
+    }, [loadUsuarios]);
 
     const openNew = () => {
         setUsuario(usuarioVazio);
@@ -69,15 +71,58 @@ const Usuario= () => {
         setDeleteUsuariosDialog(false);
     };
 
+
+    // VALIDANDO O CPF E NUMERO ANTES DE MANDAR PARA O BACK END
+    const [errors, setErrors] = useState<{ cpf?: string; telefone?: string }>({});
+
+    const somenteNumeros = (str: string) => str.replace(/\D/g, '');
+
+    // Para validar CPF
+    const cpfValido = (cpf: string) => {
+        const numeros = somenteNumeros(cpf); // "19006695793"
+        return numeros.length === 11;
+    };
+
+    // Para validar telefone
+    const telefoneValido = (telefone: string) => {
+        const numeros = somenteNumeros(telefone); // "24992272126"
+        return numeros.length === 11;
+    };
+
+
     const saveUsuario = () => {
         setSubmitted(true);
+        let newErrors: { cpf?: string; telefone?: string } = {};
+
+        const cpfLimpo = (usuario.cpf ?? '').replace(/\D/g, '');
+        const telefoneLimpo = (usuario.numeroTelefone ?? '').replace(/\D/g, '');
+
+        if (!usuario.cpf || !cpfValido(usuario.cpf)) {
+            newErrors.cpf = "CPF inválido. Digite 11 números.";
+        }
+
+        if (!usuario.numeroTelefone || !telefoneValido(usuario.numeroTelefone)) {
+            newErrors.telefone = "Número de telefone inválido.";
+        }
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
+            return; // não envia para o backend se tiver erros
+        }
+        const usuarioEnviar = {
+            ...usuario,
+            cpf: cpfLimpo,
+            numeroTelefone: telefoneLimpo,
+        };
 
         if(!usuario.id){
-            usuarioService.inserir(usuario)
+            usuarioService.inserir(usuarioEnviar)
                 .then((response)=>{
                     setUsuarioDialog(false);
                     setUsuario(usuarioVazio);
                     setUsuarios([]);
+                    loadUsuarios();
                     toast.current?.show({
                         severity: 'info',
                         summary: 'Sucesso!',
@@ -99,6 +144,7 @@ const Usuario= () => {
                     setUsuarioDialog(false);
                     setUsuario(usuarioVazio);
                     setUsuarios([]);
+                    loadUsuarios();
                     toast.current?.show({
                         severity: 'info',
                         summary: 'Sucesso!',
@@ -133,6 +179,7 @@ const Usuario= () => {
                     setUsuario(usuarioVazio);
                     setDeleteUsuarioDialog(false)
                     setUsuarios([]);
+                    loadUsuarios();
                     toast.current?.show({
                         severity: 'success',
                         summary: 'Sucesso!',
@@ -171,6 +218,7 @@ const Usuario= () => {
             setUsuarios(null);
             setSelectedUsuarios([]);
             setDeleteUsuariosDialog(false);
+            loadUsuarios();
             toast.current?.show({
                     severity: 'success',
                     summary: 'Sucesso!',
@@ -186,14 +234,62 @@ const Usuario= () => {
                 });
         })
     };
+    const formatCPF = (value: string) => {
+        return value
+            .replace(/\D/g, "")               // só números
+            .replace(/(\d{3})(\d)/, "$1.$2")  // 123.456...
+            .replace(/(\d{3})(\d)/, "$1.$2")  // 123.456.789
+            .replace(/(\d{3})(\d{1,2})$/, "$1-$2"); // 123.456.789-00
+    };
 
-    const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
-        const val = (e.target && e.target.value) || '';
-        // let _usuario = { ...usuario };
-        // _usuario[`${name}`] = val;
-        setUsuario(prevUsuario =>({
-            ...prevUsuario,
-            [name]: val,
+    const formatTelefone = (value: string) => {
+        return value
+            .replace(/\D/g, "")
+            .replace(/(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{5})(\d)/, "$1-$2")
+            .replace(/(-\d{4})\d+?$/, "$1"); // limita tamanho
+    };
+
+    // const onInputChange = (e: React.ChangeEvent<HTMLInputElement | InputMaskChangeEvent>, name: string) => {
+    //     //const val = (e.target && e.target.value) || '';
+    //     // let _usuario = { ...usuario };
+    //     // _usuario[`${name}`] = val;
+    //      let val: string;
+
+    //     if ('value' in e) {
+    //     // é InputMaskChangeEvent
+    //         val = e.value ?? '';
+    //     } else {
+    //     // é React.ChangeEvent<HTMLInputElement>
+    //         val = e.target.value;
+    //     }
+
+    //     if (name === "cpf") {
+    //         val = formatCPF(val);
+    //     }
+
+    //     if (name === "numeroTelefone") {
+    //         val = formatTelefone(val);
+    //     }
+    //     setUsuario(prevUsuario =>({
+    //         ...prevUsuario,
+    //         [name]: val,
+    //     }));
+    // };
+    const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | InputMaskChangeEvent,field: keyof Agenda.Usuario) => {
+        let val: string;
+
+        if ('value' in e) {
+            // é InputMaskChangeEvent
+            val = e.value ?? '';
+        } else {
+            // é ChangeEvent normal
+            val = e.target.value;
+        }
+
+        setUsuario(prev => ({
+            ...prev,
+            [field]: val,
         }));
     };
 
@@ -395,7 +491,7 @@ const Usuario= () => {
                         </div>
 
 
-                        <div className="field">
+                        {/*<div className="field">
                             <label htmlFor="cpf">CPF</label>
                             <InputText
                                 id="cpf"
@@ -408,9 +504,21 @@ const Usuario= () => {
                                 })}
                             />
                             {submitted && !usuario.cpf && <small className="p-invalid">CPF é obrigatório.</small>}
+                        </div>*/}
+                        <div className="field">
+                            <label htmlFor="cpf">CPF</label>
+                           <InputMask
+                                id="cpf"
+                                mask="999.999.999-99"
+                                value={usuario.cpf}
+                                onChange={(e) => onInputChange(e, 'cpf')}
+                                placeholder="000.000.000-00"
+                                className={classNames({ 'p-invalid': submitted && !!errors.cpf })}
+                            />
+                            {submitted && errors.cpf && <small className="p-invalid">{errors.cpf}</small>}
                         </div>
 
-                        <div className="field">
+                        {/*<div className="field">
                             <label htmlFor="numeroTelefone">Número de Telefone</label>
                             <InputText
                                 id="numeroTelefone"
@@ -423,8 +531,20 @@ const Usuario= () => {
                                 })}
                             />
                             {submitted && !usuario.numeroTelefone && <small className="p-invalid">Número de Telefone é obrigatório.</small>}
-                        </div>
+                        </div>*/}
 
+                        <div className="field">
+                            <label htmlFor="numeroTelefone">Número de Telefone</label>
+                            <InputMask
+                                id="numeroTelefone"
+                                mask="(99) 99999-9999"
+                                value={usuario.numeroTelefone}
+                                onChange={(e) => onInputChange(e, 'numeroTelefone')}
+                                placeholder="(00) 00000-0000"
+                                className={classNames({ 'p-invalid': submitted && !!errors.telefone })}
+                            />
+                            {submitted && errors.telefone && <small className="p-invalid">{errors.telefone}</small>}
+                        </div>
                     </Dialog>
 
                     <Dialog visible={deleteUsuarioDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteUsuarioDialogFooter} onHide={hideDeleteUsuarioDialog}>
