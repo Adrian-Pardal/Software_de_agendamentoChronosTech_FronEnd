@@ -350,7 +350,7 @@ const Perfil= () => {
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {perfil && (
                                 <span>
-                                    Você realmente deseja excluir recurso. <b>{perfil.descricao}</b>?
+                                    Você realmente deseja excluir perfil. <b>{perfil.descricao}</b>?
                                 </span>
                             )}
                         </div>
