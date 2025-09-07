@@ -196,8 +196,8 @@ const Perfil= () => {
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
-        setPerfil(prevRecurso =>({
-            ...prevRecurso,
+        setPerfil(prevPerfil =>({
+            ...prevPerfil,
             [name]: val,
         }));
     };

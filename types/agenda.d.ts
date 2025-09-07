@@ -18,4 +18,10 @@ declare namespace Agenda {
         id?: undefined;
         descricao: string;
     }
+
+    type PerfilUsuario = {
+        id?: undefined;
+        perfil : Perfil;
+        usuario : Usuario;
+    }
 }
